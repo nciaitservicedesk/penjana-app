@@ -22,8 +22,8 @@ class Controller extends BaseController
         }
 
         // Check for logged on user
-        if (session('userName'))
-        {
+        if (session('userName')) {
+            $viewData['userName'] = session('userId');
             $viewData['userName'] = session('userName');
             $viewData['userEmail'] = session('userEmail');
         }
