@@ -49,12 +49,12 @@
                  <h5 class="dropdown-item-text mb-0">{{ $userName }}</h5>
                  <p class="dropdown-item-text text-muted mb-0">{{ $userEmail }}</p>
                  <div class="dropdown-divider"></div>
-                 <a href="/signout" class="dropdown-item">Sign Out</a>
+                 <a href="{{ url('/signout') }}" class="dropdown-item">Sign Out</a>
                </div>
              </li>
            @else
              <li class="nav-item">
-               <a href="/signin" class="nav-link">Sign In</a>
+               <a href="{{ url('/signin') }}" class="nav-link">Sign In</a>
              </li>
            @endif
          </ul>
