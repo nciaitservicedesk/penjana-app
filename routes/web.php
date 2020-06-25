@@ -28,3 +28,11 @@ Route::get('/login', function () {
 Route::get('/signUp', function () {
     return view('signUp');
 });
+
+Route::post('/signUp', 'PublicAuthController@signup');
+Route::post('/login', 'PublicAuthController@login');
+Route::post('/logout', 'PublicAuthController@logout');
+Route::get('/accActivation', 'PublicAuthController@activateAccount');
+
+
+Route::get('/testMail', 'PublicAuthController@testMail');
