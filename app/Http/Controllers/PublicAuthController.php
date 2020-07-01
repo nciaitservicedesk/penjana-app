@@ -102,7 +102,7 @@ class PublicAuthController extends Controller
       
       if(isset($applicant->app_id))
       {
-        if(ApplicationStatus::where([['app_id', $applicant->app_id]])->exist())
+        if(ApplicationStatus::where([['app_id', $applicant->app_id]])->exists())
         {
           session(['hasForm' => '0']);
           return redirect('/appStatus');
