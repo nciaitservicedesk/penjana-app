@@ -391,7 +391,7 @@ class ApplicationController extends Controller
         else
         {
             //$appForm->status = config('enums.applicationStatus')['SAVED'];
-            //$appForm->save();
+            $appForm->save();
 
             $applicant = Applicant::find(session('userId'));
             $applicant->app_id = $appForm->id;
