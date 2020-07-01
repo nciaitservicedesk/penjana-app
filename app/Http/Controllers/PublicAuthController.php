@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\Controller;
 use App\Applicant;
+use App\ApplicationStatus;
 use App\EmailActivatorKey;
 use App\Mail\ActivateAccount;
 use Log;
@@ -92,17 +93,25 @@ class PublicAuthController extends Controller
         ['email', '=', $email],
         ['password', '=', md5($pass)],
       ])->first();
-      Log::info($applicant);
+      //Log::info($applicant);
       session(['userId' => $applicant->id]);
       session(['userName' => $applicant->name]);
       session(['userEmail' => $applicant->email]);
-      /*
-      $viewData['userId'] = session('userId');
-      $viewData['userName'] = session('userName');
-      $viewData['userEmail'] = session('userEmail');
-      return view('welcome')->with($viewData);
-      */
-      return view('appForm');
+      session(['userSectProgress' => $applicant->sect_progress]);
+      
+      
+      if(isset($applicant->app_id))
+      {
+        if(ApplicationStatus::where([['app_id', $applicant->app_id]])->exist())
+        {
+          session(['hasForm' => '0']);
+          return redirect('/appStatus');
+        }
+      }
+
+      session(['hasForm' => '1']);
+      return redirect('/formSct/'.$applicant->sect_progress);
+
     }
   }
 
@@ -110,7 +119,6 @@ class PublicAuthController extends Controller
   {
     $email = $request->input('email');
     $actkey = $request->input('actkey');
-    //echo "email: ".$email." and actkey: ".$actkey;
 
     $check = EmailActivatorKey::where([
       ['email', '=', $email],
@@ -139,10 +147,16 @@ class PublicAuthController extends Controller
     }
   }
 
-  public function signout(Request $request)
+  public function signout()
   {
-      $request->session()->flush();
-      return redirect('/');
+      session()->flush();
+      return redirect('/login');
+  }
+
+  public function timeout(Request $request)
+  {
+      session()->flush();
+      return view('login')->with('errMsg', "your session has expired! Please login again.");
   }
 
   public function testMail()

@@ -13,13 +13,18 @@
   <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
    <!-- Theme style -->
   <link rel="stylesheet" href="{{ asset('AdminLTE/dist/css/adminlte.min.css') }}">
+  <!-- Customize style -->
+  <link rel="stylesheet" href="{{ asset('css/custom.css') }}">
+  <!-- favicon -->
+  <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon"/>
   <!-- Google Font: Source Sans Pro -->
   <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
 </head>
 <body class="hold-transition register-page">
 <div class="register-box">
   <div class="register-logo">
-    <a><b>{{ env('APP_NAME') }}</b></a>
+    <img src="{{ asset('img/logo-jomkerja.png') }}" class="brand-image" style="max-width:250px"><br/>
+    <!--<a><b>{{ env('APP_NAME') }}</b></a>-->
   </div>
 
   <div class="card">
@@ -83,21 +88,21 @@
           </div>
         </div>
         <div class="row">
-          <div class="col-8">
-            <div class="icheck-primary">
-
+          <div class="col-8" style="margin: auto;">
+            <div  >
+              <a href="{{ url('/login') }}" class="text-center">I already have an account</a>
             </div>
           </div>
           <!-- /.col -->
           <div class="col-4">
-            <button type="submit" class="btn btn-primary btn-block">Register</button>
+            <button type="submit" class="btn btn-primary save-btn btn-block">Register</button>
           </div>
           <!-- /.col -->
         </div>
       </form>
 
 
-    <a href="{{ url('/login') }}" class="text-center">I already have an account</a>
+    
     </div>
     <!-- /.form-box -->
   </div><!-- /.card -->
