@@ -10,13 +10,30 @@ scratch. This page gets rid of all links and provides the needed markup only.
   <meta http-equiv="x-ua-compatible" content="ie=edge">
 
   <title>{{ env('APP_NAME') }}</title>
-
+  <!-- favicon -->
+  <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon"/>
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="{{ asset('AdminLTE/plugins/fontawesome-free/css/all.min.css') }}">
   <!-- Theme style -->
   <link rel="stylesheet" href="{{ asset('AdminLTE/dist/css/adminlte.min.css') }}">
+  <!-- Customize style -->
+  <link rel="stylesheet" href="{{ asset('css/custom.css?v=1.03') }}">
   <!-- Google Font: Source Sans Pro -->
   <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+  <!-- daterange picker -->
+  <link rel="stylesheet" href="{{ asset('AdminLTE/plugins/daterangepicker/daterangepicker.css') }}">
+  <!-- iCheck for checkboxes and radio inputs -->
+  <link rel="stylesheet" href="{{ asset('AdminLTE/plugins/icheck-bootstrap/icheck-bootstrap.min.css') }}">
+  <!-- Bootstrap Color Picker -->
+  <link rel="stylesheet" href="{{ asset('AdminLTE/plugins/bootstrap-colorpicker/css/bootstrap-colorpicker.min.css') }}">
+  <!-- Tempusdominus Bbootstrap 4 -->
+  <link rel="stylesheet" href="{{ asset('AdminLTE/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css') }}">
+  <!-- Select2 -->
+  <link rel="stylesheet" href="{{ asset('AdminLTE/plugins/select2/css/select2.min.css') }}">
+  <link rel="stylesheet" href="{{ asset('AdminLTE/plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css') }}">
+  <!-- Bootstrap4 Duallistbox -->
+  <link rel="stylesheet" href="{{ asset('AdminLTE/plugins/bootstrap4-duallistbox/bootstrap-duallistbox.min.css') }}">
+
 </head>
 <body class="hold-transition sidebar-mini">
 <div class="wrapper">
@@ -26,11 +43,11 @@ scratch. This page gets rid of all links and provides the needed markup only.
   <!-- /.navbar -->
 
   <!-- Main Sidebar Container -->
-  <aside class="main-sidebar sidebar-gray-300-primary elevation-4">
+  <aside class="main-sidebar sidebar-light-secondary elevation-4">
     <!-- Brand Logo -->
     <a href="" class="brand-link">
       <img src="{{ asset('img/logo-jomkerja.png') }}" class="brand-image"
-           style="opacity: .8; float:unset;"><br/>
+           style="opacity: .8; float:unset; max-height:50px"><br/>
       <!--<span class="brand-text font-weight-light">{{ env('APP_NAME') }}</span>-->
     </a>
 
@@ -53,17 +70,35 @@ scratch. This page gets rid of all links and provides the needed markup only.
           <!-- Add icons to the links using the .nav-icon class
                with font-awesome or any other icon font library -->
           <li class="nav-item has-treeview menu-open">
-            <a href="{{ url('/signout') }}" class="nav-link">
+             @if(session('hasForm') == '1') 
+            <a href="{{ url('/formSct/1') }}" class="nav-link @if($activeLink==config('enums.applicantSidebarLinks')['FORM']) active @endif">
+                <p>
+                  Application Form
+                </p>
+              </a>
+              @else
+              <a href="{{ url('/appStatus') }}" class="nav-link @if($activeLink==config('enums.applicantSidebarLinks')['APP_STATUS']) active @endif">
+                <p>
+                  Application Status
+                </p>
+              </a>
+              @endif
+            <a href="" class="nav-link @if($activeLink==config('enums.applicantSidebarLinks')['FAQ']) active @endif">
                 <p>
                   FAQ
                 </p>
               </a>
-              <a href="{{ url('/signout') }}" class="nav-link">
+              <a href="" class="nav-link @if($activeLink==config('enums.applicantSidebarLinks')['CONTACT_US']) active @endif">
                 <p>
                   Contact Us
                 </p>
               </a>
-            <a href="{{ url('/signout') }}" class="nav-link">
+            <a href="" class="nav-link @if($activeLink==config('enums.applicantSidebarLinks')['ACTION_HIST']) active @endif">
+                <p>
+                  Action History
+                </p>
+            </a>
+            <a href="{{ url('/logout') }}" class="nav-link">
                 <p>
                   Logout
                 </p>
@@ -74,7 +109,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
                 <i class="right fas fa-angle-left"></i>
               </p>
             </a>-->
-            
           </li>
           
         </ul>
@@ -111,7 +145,24 @@ scratch. This page gets rid of all links and provides the needed markup only.
 <script src="{{ asset('AdminLTE/plugins/jquery/jquery.min.js') }}"></script>
 <!-- Bootstrap 4 -->
 <script src="{{ asset('AdminLTE/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-<!-- AdminLTE App -->
-<!--<script src="AdminLTE/dist/js/adminlte.min.js"></script> -->
+<!-- Moment.js -->
+<script src="{{ asset('AdminLTE/plugins/moment/moment.min.js') }}"></script> <!-- dependencies -->
+<!-- date-range-picker -->
+<script src="{{ asset('AdminLTE/plugins/daterangepicker/daterangepicker.js') }}"></script>
+<!-- Tempusdominus Bootstrap 4 -->
+<script src="{{ asset('AdminLTE/plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js') }}"></script>
+<!-- bs-custom-file-input -->
+<script src="{{ asset('AdminLTE/plugins/bs-custom-file-input/bs-custom-file-input.min.js') }}"></script>
+
+<!-- Select2 -->
+<!--<script src="AdminLTE/plugins/select2/js/select2.full.min.js"></script>-->
+<!-- InputMask -->
+<!--<script src="AdminLTE/plugins/moment/moment.min.js"></script>-->
+<!--<script src="AdminLTE/plugins/inputmask/min/jquery.inputmask.bundle.min.js"></script>-->
+
+
+<!-- Bootstrap Switch -->
+<!--<script src="AdminLTE/plugins/bootstrap-switch/js/bootstrap-switch.min.js"></script>-->
+@yield('jsscript')
 </body>
 </html>

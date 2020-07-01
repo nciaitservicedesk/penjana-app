@@ -1,0 +1,53 @@
+.err-msg {
+    color:#d4351c;
+}
+
+.save-btn {
+    background-color:#003078 !important;
+}
+
+.nav-link.disabled
+{
+    background-color:white
+}
+
+
+.thheader{
+    background-color:black;
+    color:white;
+}
+
+.thcalculate{
+    background-color:white;
+    color:black;
+}
+
+.textboxalign{
+    text-align: center; 
+    vertical-align: middle;
+    width:100%;
+    border-style: none;
+    border-color: transparent;
+}
+
+.tdtextboxalign{
+    text-align: center; 
+    vertical-align: middle;
+    width:15%;
+    border-style: none;
+    border-color: transparent;
+}
+
+.thalign{
+    text-align: center; 
+    vertical-align: middle;
+}
+
+.boldformula{
+    font-weight: bold;
+}
+
+.nav-link.disabled{
+    background-color: #BEC1C3;
+}
+

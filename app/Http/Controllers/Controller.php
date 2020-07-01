@@ -30,6 +30,18 @@ class Controller extends BaseController
 
         return $viewData;
     }
+
+    public function checkSession()
+    {
+        if(session('userName'))
+        {
+            return;
+        }
+        else
+        {
+            return redirect('/timeout');
+        }
+    }
 }
 
 

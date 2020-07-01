@@ -17,8 +17,6 @@
   <link rel="stylesheet" href="{{ asset('AdminLTE/dist/css/adminlte.min.css') }}">
   <!-- Customize style -->
   <link rel="stylesheet" href="{{ asset('css/custom.css') }}">
-  <!-- favicon -->
-  <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon"/>
   <!-- Google Font: Source Sans Pro -->
   <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
 </head>
@@ -31,18 +29,10 @@
   <!-- /.login-logo -->
   <div class="card">
     <div class="card-body login-card-body">
-      <p class="login-box-msg">Sign in to start your session</p>
+      <p class="login-box-msg">Reset your password</p>
 
       <form action="{{ url('/login') }}" method="post">
         @csrf
-        <div class="input-group mb-3">
-          <input type="text" id="txtEmail" name="txtEmail" class="form-control" placeholder="Email">
-          <div class="input-group-append">
-            <div class="input-group-text">
-              <span class="fas fa-envelope"></span>
-            </div>
-          </div>
-        </div>
         <div class="input-group mb-3">
           <input type="password" id="txtPass" name="txtPass" class="form-control" placeholder="Password">
           <div class="input-group-append">
@@ -51,6 +41,14 @@
             </div>
           </div>
         </div>
+        <div class="input-group mb-3">
+            <input type="password" id="txtConfirmPass" name="txtConfirmPass" class="form-control" placeholder="Re-type Password">
+            <div class="input-group-append">
+              <div class="input-group-text">
+                <span class="fas fa-lock"></span>
+              </div>
+            </div>
+          </div>
         <div class="row">
           <div class="col-8">
             <div class="form-group has-error">
@@ -63,7 +61,7 @@
           </div>
           <!-- /.col -->
           <div class="col-4">
-            <button type="submit" class="btn btn-primary save-btn btn-block">Sign In</button>
+            <button type="submit" class="btn btn-primary save-btn btn-block">Reset</button>
           </div>
           <!-- /.col -->
         </div>
@@ -71,9 +69,6 @@
 
       <!-- /.social-auth-links -->
 
-      <p class="mb-1">
-        <a href="{{ url('/forgotPass') }}">I forgot my password</a>
-      </p>
       <p class="mb-0">
       <a href="{{ url('/signUp') }}" class="text-center">Register a new account</a>
       </p>
