@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\Controller;
 use Log;
 
-class AuthController extends Controller
+class AdmoAuthController extends Controller
 {
     public function signin()
     {
