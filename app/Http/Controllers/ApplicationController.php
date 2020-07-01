@@ -607,6 +607,7 @@ class ApplicationController extends Controller
         }
 
         if(!empty($errMsg)){
+            $req['id']=$request->appId;
             $loadData =[];
             $loadData['sect_progress'] = session('userSectProgress');
             return view('appFormSect3')->with([
