@@ -13,11 +13,50 @@ return [
     ],
 
     'applicationStatus' => [
-        'SUBMITTED' => 0,
-        'PREQUALIFICATION_FAILED' => -1,
-        'REJECTED' => -2,
-        'APPROVED' => 1,
+        'SUBMITTED' => 1,
+        'APPEAL' => 9,
+        'PREQUALIFICATION_FAILED' => -2,
+        'REJECTED' => -1,
+        'APPEAL_REJECTED' => -3,
+        'APPROVED' => 8,
+        'ACCEPT_LOA' =>100,
+        'LOA_EXPIRED' => 101,
+        'APPEAL_EXPIRED' => 102,
     ],
+
+    'applicationStartState' => [
+        'EVALUTION' => 1,
+        'APPEAL_EVALUATION' => 9,
+    ],
+
+
+    'role' => [
+        'SECL1' => 1,
+        'SECL2' => 2,
+        'COMM' => 3,
+        'LEGAL'  => 4,
+        'ENDORSE' => 5,
+        'VIEWER' => 6,
+    ],
+    
+    'flowStateId' =>[
+        'Start_APPEAL' => -4,
+        'REJECT_APPEAL' => -3,
+        'REJECT' => -1,
+        'COMM' => 3,
+        'LEGAL_LOA' => 4,
+        'APPROVE' => 6,
+        'LEGAL_REJ_LETTER' => 7,
+        'COMM_APPEAL' => 11,
+        
+    ],
+    
+    'applicationFileContentType' =>[
+        'LOA' => 1,
+        'REJ_LTR' => 2,
+        'APPEAL_FILE' => 3,
+    ],
+
 
     'applicantSidebarLinks' => [
         'APP_STATUS' => 0,
@@ -68,4 +107,6 @@ return [
         'TDM' => 13,
         'CDR' => 14,
     ],
+
+    
 ];
