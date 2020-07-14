@@ -31,10 +31,10 @@
     <div class="card-body login-card-body">
       <p class="login-box-msg">Key in your email to reset password</p>
 
-      <form action="{{ url('/login') }}" method="post">
+      <form action="{{ url('/forgotPass') }}" method="post">
         @csrf
         <div class="input-group mb-3">
-          <input type="text" id="txtEmail" name="txtEmail" class="form-control" placeholder="Email">
+          <input type="text" id="email" name="email" class="form-control" placeholder="Email">
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-envelope"></span>
@@ -45,8 +45,8 @@
           <div class="col-8">
             <div class="form-group has-error">
               <span class="text-danger">
-                @isset($errMsg)
-                  {{$errMsg}}
+                @isset($errMsg['email'])
+                  {{$errMsg['email']}}
                 @endisset
               </span>
             </div>
@@ -86,7 +86,7 @@
       </div>
       <div class="modal-footer justify-content-end"> <!-- class="modal-footer justify-content-between" -->
         <!--<button type="button" class="btn btn-default" data-dismiss="modal">Close</button> -->
-        <button type="button" data-dismiss="modal" class="btn btn-primary">OK</button> 
+        <a href="{{url('/login')}}"> <button type="button" class="btn btn-primary">OK</button> </a>
       </div>
     </div>
     <!-- /.modal-content -->

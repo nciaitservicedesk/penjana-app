@@ -1,7 +1,7 @@
 @extends('appForm')
 
 @section('tabTitle')
-Pre-Qualification Criteria
+Section 2: Pre-Qualification Criteria
 @endsection
 
 @section('sectBody')
@@ -11,7 +11,7 @@ Pre-Qualification Criteria
     <input type="hidden" id="applicantId" name="applicantId" value="{{ $appForm['id'] ?? '' }}">
     <input type="hidden" id="act" name="act" value="{{ $loadData['act'] ?? '' }}">
     <div class="card-body">
-        <p>View sample form here <a href=""><i class="fa fa-eye"></i></a></p>
+        <!--<p>View sample form here <a href=""><i class="fa fa-eye"></i></a></p> -->
       <!-- Part A --> 
       <div class="form-group row">
         <label  class="col-sm-2 col-form-label">PART A</label>
@@ -367,7 +367,7 @@ Pre-Qualification Criteria
     <!-- /.card-body -->
     <div class="card-footer">
       @if ('view' != ($loadData['act'] ?? '')) 
-      <button type="submit" class="btn btn-success save-btn float-right">Save</button>
+      <button type="submit" class="btn btn-success save-btn float-right">Save and Proceed</button>
       @endif
     </div>
     <!-- /.card-footer -->
