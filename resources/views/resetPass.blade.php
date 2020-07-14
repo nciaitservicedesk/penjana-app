@@ -31,18 +31,28 @@
     <div class="card-body login-card-body">
       <p class="login-box-msg">Reset your password</p>
 
-      <form action="{{ url('/login') }}" method="post">
+      <form action="{{ url('/resetPass') }}" method="post">
         @csrf
+        <span class="text-danger" for="pass">
+          @isset($errMsg['pass'])
+            {{$errMsg['pass']}}
+          @endisset
+        </span>
         <div class="input-group mb-3">
-          <input type="password" id="txtPass" name="txtPass" class="form-control" placeholder="Password">
+          <input type="password" id="pass" name="pass" class="form-control" placeholder="Password">
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-lock"></span>
             </div>
           </div>
         </div>
+        <span class="text-danger" for="pass2">
+          @isset($errMsg['pass2'])
+            {{$errMsg['pass2']}}
+          @endisset
+        </span>
         <div class="input-group mb-3">
-            <input type="password" id="txtConfirmPass" name="txtConfirmPass" class="form-control" placeholder="Re-type Password">
+            <input type="password" id="pass2" name="pass2" class="form-control" placeholder="Re-type Password">
             <div class="input-group-append">
               <div class="input-group-text">
                 <span class="fas fa-lock"></span>
@@ -51,13 +61,6 @@
           </div>
         <div class="row">
           <div class="col-8">
-            <div class="form-group has-error">
-              <span class="text-danger">
-                @isset($errMsg)
-                  {{$errMsg}}
-                @endisset
-              </span>
-            </div>
           </div>
           <!-- /.col -->
           <div class="col-4">
@@ -95,7 +98,7 @@
       </div>
       <div class="modal-footer justify-content-end"> <!-- class="modal-footer justify-content-between" -->
         <!--<button type="button" class="btn btn-default" data-dismiss="modal">Close</button> -->
-        <button type="button" data-dismiss="modal" class="btn btn-primary">OK</button> 
+        <a href="{{url('/login')}}"> <button type="button" class="btn btn-primary">OK</button> </a>
       </div>
     </div>
     <!-- /.modal-content -->

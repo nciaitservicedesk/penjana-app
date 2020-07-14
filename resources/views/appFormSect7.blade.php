@@ -1,7 +1,7 @@
 @extends('appForm')
 
 @section('tabTitle')
-Declaraction
+Section 7: Declaraction
 @endsection
 
 @section('sectBody')
@@ -9,21 +9,24 @@ Declaraction
     @csrf
     <input type="hidden" id="appId" name="appId" value="{{ $appForm['id'] ?? '' }}">
     <div class="card-body">
-        <p>View sample form here <a href=""><i class="fa fa-eye"></i></a></p>
+        <h5>Application Preview</h5>
 
         <div class="form-group row">
           <label class="col-sm-2 col-form-label"></label>
+        </div>
+        @php
+            $prevData = $loadData['previewData'];
+        @endphp
+        <div style="height:700px; width:880px; border:none; overflow:scroll; overflow-x:hidden; overflow-y:scroll;">
+          <p>
+          <x-preview  :previewData=$prevData />
+          </p>
         </div>
 
         <div class="form-group row">
           <label class="col-sm-2 col-form-label"></label>
         </div>
-
-        <div class="form-group row">
-          <label class="col-sm-2 col-form-label"></label>
-        </div>
-
-
+        
         <div class="col-12">
           <span class="text-danger" style="font-weight: bold;" >
             @isset($errMsg['chkTnc'])
@@ -100,7 +103,8 @@ Declaraction
                       <label>DATE:</label>
                   </div>
                   <div class="col-sm-8">
-                      <input type="text" class="text-sm-left border" name="inputSignDate" id="inputSignDate" readonly>
+                      <input type="text" class="text-sm-left border" name="inputSignDate" id="inputSignDate"
+                      value="{{ $appForm['inputSignDate'] ?? '' }}" readonly>
                 </div>
               </th>
             </tr>
@@ -185,7 +189,7 @@ Declaraction
 
     <!-- /.card-body -->
     <div class="card-footer">
-      <button type="submit" class="btn btn-success save-btn float-right">Save</button>
+      <button type="submit" class="btn btn-success save-btn float-right">Submit</button>
     </div>
     <!-- /.card-footer -->
   </form>
@@ -193,12 +197,15 @@ Declaraction
 
 @section('jsscript')
 <script>
-  var today = new Date();
-  var dd = String(today.getDate()).padStart(2, '0');
-  var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
-  var yyyy = today.getFullYear();
+  $(document).ready(function(){
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    var yyyy = today.getFullYear();
 
-  today = yyyy + '-' + mm  + '-' + dd;
-  document.getElementById("inputSignDate").value = today;
+    today = dd + '-' + mm  + '-' + yyyy;
+    document.getElementById("inputSignDate").value = today;
+  });
+  
 </script>
 @endsection 

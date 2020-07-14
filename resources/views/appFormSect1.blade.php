@@ -1,7 +1,7 @@
 @extends('appForm')
 
 @section('tabTitle')
-Company Profile
+Section 1: Company Profile
 @endsection
 
 @section('sectBody')
@@ -10,8 +10,9 @@ Company Profile
      <input type="hidden" id="appId" name="appId" value="{{ $appForm['id'] ?? '' }}">
      <input type="hidden" id="act" name="act" value="{{ $loadData['act'] ?? '' }}">
     <div class="card-body">
-        <p>View sample form here <a href=""><i class="fa fa-eye"></i></a></p>
+        <!--<p>View sample form here <a href=""><i class="fa fa-eye"></i></a></p>-->
         <!-- Company Name -->
+        <p>Note: please complete all sections and submit application forms at section 7	</p>
         <div class="row">
           <label for="errorCompName" class="col-sm-3" > </label>
           <div class="col-sm-9">
@@ -50,7 +51,9 @@ Company Profile
             </div>
             <input type="text" class="form-control datetimepicker-input" id="inputIncorpDate" name="inputIncorpDate"
              data-target="#incorpdate" data-toggle="datetimepicker"
-             placeholder="Incorporation Date" value="{{ $appForm['incorporation_date'] ?? '' }}"/>
+             placeholder="Incorporation Date" 
+             value="{{ isset($appForm['incorporation_date']) ? date( "d-m-Y",strtotime($appForm['incorporation_date'])) : '' }}"/>
+             <!----> 
             
         </div>
         </div>
@@ -238,6 +241,19 @@ Company Profile
                 </span>
         </div>
       </div>
+      <div class="row">
+        <label for="inputEqualty1" class="col-sm-4"></label>
+        <div class="col-sm-3">
+          <div class="input-group mb-3">
+          Malaysian
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="input-group mb-3">
+          Foreigner
+          </div>
+        </div>
+      </div>
       <div class="form-group row">
         <label for="inputEqualty1" class="col-sm-3 col-form-label">Equalty Participation</label>
         <div class="col-sm-3">
@@ -363,7 +379,7 @@ Company Profile
 
     <!-- /.card-body -->
     <div class="card-footer">
-      <button type="submit" class="btn btn-success save-btn float-right">Save</button>
+      <button type="submit" class="btn btn-success save-btn float-right">Save and Proceed</button>
     </div>
     <!-- /.card-footer -->
 
@@ -386,7 +402,7 @@ Company Profile
     })*/
 
     $('#incorpdate').datetimepicker({
-      format: 'YYYY-MM-DD'
+      format: 'DD-MM-YYYY'
     });
 
   });

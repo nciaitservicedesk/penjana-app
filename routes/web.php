@@ -12,7 +12,9 @@ use Illuminate\Support\Facades\Route;
 | contains the "web" middleware group. Now create something great!
 |
 */
-Route::get('/', 'PublicAuthController@login');
+Route::get('/', function () {
+    return view('login');
+});
 //Route::get('/signin', 'AuthController@signin');
 //Route::get('/callback', 'AuthController@callback');
 //Route::get('/signout', 'AuthController@signout');
@@ -32,11 +34,10 @@ Route::get('/signUp', function () {
 Route::get('/forgotPass', function () {
     return view('forgotPass');
 });
+Route::post('/forgotPass', 'PublicAuthController@forgotPass');
 
-Route::get('/resetPass', function () {
-    return view('resetPass');
-});
-
+Route::get('/resetPass/{email}/{key}', 'PublicAuthController@viewResetPass');
+Route::post('/resetPass', 'PublicAuthController@resetPass');
 Route::post('/signUp', 'PublicAuthController@signup');
 Route::post('/login', 'PublicAuthController@login');
 Route::get('/logout', 'PublicAuthController@signout');
@@ -52,13 +53,24 @@ Route::post('/sct5Save', 'ApplicationController@sct5Save');
 Route::post('/sct6Save', 'ApplicationController@sct6Save');
 Route::post('/sct7Save', 'ApplicationController@sct7Save');
 Route::get('/appStatus', 'ApplicationController@viewAppStatus');
+Route::post('/appStatus', 'ApplicationController@postAppStatus');
+Route::get('/appeal', 'ApplicationController@viewAppeal');
+Route::post('/appeal', 'ApplicationController@postAppeal');
 Route::get('/supportDoc/{appId}/{filename}', 'FileStorageController@getSupportDoc');
+Route::get('/appFile/{appId}/{filename}', 'FileStorageController@getAppFile');
+Route::get('/letter/{appId}/{filename}', 'FileStorageController@getLetter');
+
 
 // ----------- end public web route ---------
 
 // ----------- start office web route ---------
-Route::get('/admo/login', 'AdmoAuthController@sct1Save');
+Route::get('/officer/signin', 'AuthController@signin');
+Route::get('/officer/appList', 'ApprovalController@viewAppList');
+Route::get('/officer/viewDetail/{appId}', 'ApprovalController@viewAppDetail');
+Route::post('/officer/viewDetail/{appId}', 'ApprovalController@postAppDetail');
+Route::get('/officer/viewAudit/{appId}', 'ApprovalController@viewAppAudit');
 Route::get('/callback', 'AuthController@callback');
+
 // ----------- end office web route ---------
 
 
@@ -71,3 +83,7 @@ Route::get('/testcode', function ()
     echo date('YmdHisv');
     echo date_default_timezone_get();
 });
+Route::get('/officer/bypass/{id}', 'ApprovalController@devBypass');
+Route::get('/preview', 'ApplicationController@viewAppPreview');
+Route::get('/previewpdf', 'ApplicationController@viewAppPreviewPdf');
+Route::get('/testpdf', 'ApplicationController@testpdf');

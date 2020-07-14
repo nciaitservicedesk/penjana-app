@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Microsoft\Graph\Graph;
 use Microsoft\Graph\Model;
 use App\TokenStore\TokenCache;
+use App\Officer;
+use App\Role;
 
 class AuthController extends Controller
 {
@@ -80,8 +82,21 @@ class AuthController extends Controller
       
         $tokenCache = new TokenCache();
         $tokenCache->storeTokens($accessToken, $user);
-      
-        return redirect('/');
+        // get role info
+        if(!Officer::Where(([['email', '=', session('userEmail')]])->exists()))
+        {//not authorize to access this app
+          return redirect('/')
+          ->with('error', 'Error not authorize')
+          ->with('errorDetail', 'You are not authorized to access this application.');
+        }
+        $officer = Officer::Where([['email', '=', session('userEmail')]])->first();
+        $role = Role::find($officer->role_id);
+        session(
+          ['userId' =>  $officer->id],
+          ['userRoleId' =>  $officer->role_id],
+          ['userRole' =>  $role->name],
+      );
+        return redirect('/officer/appList');
       }
       catch (League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
         return redirect('/')

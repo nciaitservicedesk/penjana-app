@@ -30,12 +30,8 @@
     border-color: transparent;
 }
 
-.tdtextboxalign{
-    text-align: center; 
-    vertical-align: middle;
-    width:15%;
-    border-style: none;
-    border-color: transparent;
+.readonlycolor{
+    background-color: #e9ecef !important;
 }
 
 .thalign{

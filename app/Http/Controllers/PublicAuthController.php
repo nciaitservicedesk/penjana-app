@@ -11,7 +11,9 @@ use App\Applicant;
 use App\ApplicationStatus;
 use App\EmailActivatorKey;
 use App\Mail\ActivateAccount;
+use App\Mail\ForgotAccountPassword;
 use Log;
+use Session;
 
 class PublicAuthController extends Controller
 {
@@ -46,13 +48,7 @@ class PublicAuthController extends Controller
       $request->flash();
       return view('signUp', ['errMsg' => $errMsg] );
     }
-    /*
-    Applicant::create([
-      'name' => $name,
-      'email'  => $email,
-      'password' => md5($pass)
-    ]);
-    */
+
     $applicant = new Applicant;
     $applicant->name = $name;
     $applicant->email = $email;
@@ -93,7 +89,14 @@ class PublicAuthController extends Controller
         ['email', '=', $email],
         ['password', '=', md5($pass)],
       ])->first();
+      
+      if($applicant->status == config('enums.applicantStatus')['PENDING_ACTIVATION'])
+      {
+        return view('login')->with('errMsg', "Please activate your email before login.");
+      }
       //Log::info($applicant);
+      //Session::flush();
+      //Session::regenerate();
       session(['userId' => $applicant->id]);
       session(['userName' => $applicant->name]);
       session(['userEmail' => $applicant->email]);
@@ -112,6 +115,113 @@ class PublicAuthController extends Controller
       session(['hasForm' => '1']);
       return redirect('/formSct/'.$applicant->sect_progress);
 
+    }
+  }
+
+  public function forgotPass(Request $request)
+  {
+    $email= $request->email;
+    if(empty($email))
+    {
+      $errMsg["email"] = "Please fill in your email!";
+    } 
+    elseif(!filter_var($email, FILTER_VALIDATE_EMAIL)){
+      $errMsg["email"] = "Email format is not correct!";
+    } 
+
+    if(!empty($errMsg)){
+      $request->flash();
+      return view('forgotPass', ['errMsg' => $errMsg] );
+    }
+    else
+    {
+      if(Applicant::where('email', '=',$email)->exists())
+      {
+        //send email for validation
+        $name = Applicant::select('name')->where('email', '=',$email)->first()->name;
+        $uniqueId = uniqid('', true);
+        $emailActivatorKey = new EmailActivatorKey;
+        $emailActivatorKey->email = $email;
+        $emailActivatorKey->purpose = config('enums.emailActPurpose')['FORGOT_PASS'];
+        $emailActivatorKey->validateKey = $uniqueId;
+        $emailActivatorKey->validity = date('Y-m-d H:i:s', strtotime('+30 minute'));
+        $emailActivatorKey->save(); 
+
+        Mail::to($email)->send(new ForgotAccountPassword($name, $email, $uniqueId));
+      }
+
+      return view('forgotPass')->with('alertMsg', "A password reset email has been send to your email. Please use the link in the email to reset your password.");
+    }
+
+  }
+
+  public function viewResetPass($email,$key)
+  {
+    $check = EmailActivatorKey::where([
+      ['email', '=', $email],
+      ['validateKey', '=', $key],
+      ['purpose', '=', config('enums.emailActPurpose')['FORGOT_PASS']],
+      ['validity', '>', date('Y-m-d H:i')]
+    ])->exists();
+
+    if($check)
+    {
+      $eak = EmailActivatorKey::where([
+        ['email', '=', $email],
+        ['validateKey', '=', $key],
+        ['purpose', '=', config('enums.emailActPurpose')['FORGOT_PASS']],
+      ]);
+      $eak->delete();
+      session(['resetEmail' => $email]);
+      return view('resetPass');
+
+    }
+    else
+    {
+      abort(401, 'Your reset password key has expired. Please request a new one at the login page.');
+    }
+  }
+
+  public function resetPass(Request $request)
+  {
+    $pass = $request->input('pass');
+    $pass2 = $request->input('pass2');
+    if(session('resetEmail'))
+    {
+      $email = session('resetEmail');
+      if(empty($pass))
+      {
+        $errMsg["pass"] = "please fill in all mandatory fields";
+      }
+      if(empty($pass2))
+      {
+        $errMsg['pass2'] = "please fill in all mandatory fields";
+      }
+      elseif(!preg_match("/^[a-zA-Z0-9]{6,}+$/",$pass))
+      {
+        $errMsg["pass"] ="Password must contain a minimun of 6 combination of number and alphabets!";
+      } 
+      elseif($pass != $pass2)
+      {
+        $errMsg["pass2"] ="Password not same, please retype again!";
+      }
+
+      if(!empty($errMsg))
+      {
+        return view('resetPass', ['errMsg' => $errMsg] );
+      }
+
+      $applicant = Applicant::where('email', '=', $email)->first();
+      $applicant->password = md5($pass);
+      $applicant->save();
+
+      
+      return view('resetPass')->with('alertMsg', "You have successfully reset your password! Please login with your new password.");
+
+    }
+    else
+    {
+      abort(401, 'Your reset password key has expired. Please request a new one at the login page.');
     }
   }
 
@@ -149,13 +259,15 @@ class PublicAuthController extends Controller
 
   public function signout()
   {
-      session()->flush();
+    Session::flush();
+    Session::regenerate();
       return redirect('/login');
   }
 
   public function timeout(Request $request)
   {
-      session()->flush();
+      Session::flush();
+      Session::regenerate();
       return view('login')->with('errMsg', "your session has expired! Please login again.");
   }
 

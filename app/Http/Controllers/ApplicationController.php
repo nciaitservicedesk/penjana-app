@@ -7,10 +7,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\Controller;
+use App\Traits\FormPreviewTrait;
 use App\Applicant;
 use App\ApplicantSignInfo;
 use App\ApplicationForm;
 use App\ApplicationStatus;
+use App\ApplicationState;
 use App\EmailActivatorKey;
 use App\ContactInfo;
 use App\AssistInfo;
@@ -20,11 +22,18 @@ use App\Financial;
 use App\RecruitPax;
 use App\RecruitPlan;
 use App\SupportDoc;
+use App\ApplicationHistory;
+use App\ApplicationFile;
 use App\Mail\ActivateAccount;
 use Log;
+use PDF;
+use DateTime;
+use DateInterval;
+use DatePeriod;
 
 class ApplicationController extends Controller
 {
+    use FormPreviewTrait;
     public function viewAppSect($sctNo)
     {
         if (!session('userName')) 
@@ -55,8 +64,10 @@ class ApplicationController extends Controller
                 if(isset($applicant->app_id))
                 {
                     $appForm = ApplicationForm::find($applicant->app_id);
+                    
                     $viewData['appForm'] = $appForm->toArray();
                     $viewData['act'] = 'edit';
+                    Log::info($viewData['appForm']);
                 }
                 else
                 {
@@ -109,12 +120,20 @@ class ApplicationController extends Controller
                             $emp['inputLocalYear2'] = $employee->pax_count;
                         elseif ($employee->year == 3 && $employee->emp_type==config('enums.employeeType')['LOCAL'])
                             $emp['inputLocalYear3'] = $employee->pax_count;
+                        elseif ($employee->year == 4 && $employee->emp_type==config('enums.employeeType')['LOCAL'])
+                            $emp['inputLocalYear4'] = $employee->pax_count;
+                        elseif ($employee->year == 5 && $employee->emp_type==config('enums.employeeType')['LOCAL'])
+                            $emp['inputLocalYear5'] = $employee->pax_count;
                         elseif ($employee->year == 1 && $employee->emp_type==config('enums.employeeType')['FOREIGNER'])
                             $emp['inputForeignerYear1'] = $employee->pax_count;
                         elseif ($employee->year == 2 && $employee->emp_type==config('enums.employeeType')['FOREIGNER'])
                             $emp['inputForeignerYear2'] = $employee->pax_count;
                         elseif ($employee->year == 3 && $employee->emp_type==config('enums.employeeType')['FOREIGNER'])
                             $emp['inputForeignerYear3'] = $employee->pax_count;
+                        elseif ($employee->year == 4 && $employee->emp_type==config('enums.employeeType')['FOREIGNER'])
+                            $emp['inputForeignerYear4'] = $employee->pax_count;
+                        elseif ($employee->year == 5 && $employee->emp_type==config('enums.employeeType')['FOREIGNER'])
+                            $emp['inputForeignerYear5'] = $employee->pax_count;
                         elseif ($employee->year == 0 && $employee->emp_type==config('enums.employeeType')['LOCAL'])
                             $emp['inputMalayEmp'] = $employee->pax_count;
                         elseif ($employee->year == 0 && $employee->emp_type==config('enums.employeeType')['FOREIGNER'])
@@ -130,8 +149,6 @@ class ApplicationController extends Controller
                     }
                     $emp['id'] = $applicant->app_id;
                     $viewData['appForm'] = $emp; 
-
-
                 }
                 else
                 {
@@ -151,20 +168,32 @@ class ApplicationController extends Controller
                         switch($temp->year)
                         {
                             case -1:
+                                $fin['inputRevYear5'] = $temp->sales;
+                                $fin['inputNetYear5'] = $temp->loss;
+                                $fin['inputCapYear5'] = $temp->capital;
+                                $fin['inputOpYear5'] = $temp->expenditure;
+                            break;
+
+                            case -2:
+                                $fin['inputRevYear4'] = $temp->sales;
+                                $fin['inputNetYear4'] = $temp->loss;
+                                $fin['inputCapYear4'] = $temp->capital;
+                                $fin['inputOpYear4'] = $temp->expenditure;
+                            break;
+
+                            case -3:
                                 $fin['inputRevYear3'] = $temp->sales;
                                 $fin['inputNetYear3'] = $temp->loss;
                                 $fin['inputCapYear3'] = $temp->capital;
                                 $fin['inputOpYear3'] = $temp->expenditure;
                             break;
-
-                            case -2:
+                            case -4:
                                 $fin['inputRevYear2'] = $temp->sales;
                                 $fin['inputNetYear2'] = $temp->loss;
                                 $fin['inputCapYear2'] = $temp->capital;
                                 $fin['inputOpYear2'] = $temp->expenditure;
                             break;
-
-                            case -3:
+                            case -5:
                                 $fin['inputRevYear1'] = $temp->sales;
                                 $fin['inputNetYear1'] = $temp->loss;
                                 $fin['inputCapYear1'] = $temp->capital;
@@ -224,6 +253,7 @@ class ApplicationController extends Controller
 
                     $recruit = array_merge($tbl1, $tbl2);
                     $recruit['id'] = $applicant->app_id;
+                    $recruit['useFormula'] = $useFormula;
                     $viewData['appForm'] = $recruit;
 
                 }
@@ -259,14 +289,97 @@ class ApplicationController extends Controller
                 }
             break;
             case 7:
-                    $appForm = [];
+                    $previewData = $this->getFullPreviewByAppicant($applicant->id);
                     $appForm['id'] = $applicant->app_id;
+                    $appForm['inputSignDate'] = date('d-m-Y');
                     $viewData['appForm'] = $appForm; 
+                    $viewData['previewData'] = $previewData; 
             break;
 
         }
 
         return $viewData;
+    }
+
+    public function viewAppPreview()
+    {
+        if (!session('userName')) 
+        {
+            return redirect('/timeout');
+        }
+        $userId = session('userId');
+        $test= $this->getFullPreviewByAppicant($userId);
+        //Log::info($test);
+        return view('formPreview2')->with([
+            'activeLink' => config('enums.applicantSidebarLinks')['APP_STATUS'],
+            'previewData' => $test
+            ]);
+    }
+
+    public function viewAppPreviewPdf()
+    {
+        if (!session('userName')) 
+        {
+            return redirect('/timeout');
+        }
+        $userId = session('userId');
+        $test= $this->getFullPreviewByAppicant($userId);
+        //Log::info($test);
+        $pdf = PDF::loadView('formPreview2', [
+            'activeLink' => config('enums.applicantSidebarLinks')['APP_STATUS'],
+            'previewData' => $test
+            ]);
+
+        return $pdf->download('testing.pdf'); 
+    }
+
+    public function testpdf()
+    {
+        ///*
+        $appId= 3;
+        $isDraft = 1;
+        $info = [];
+        $appForm = ApplicationForm::find($appId);
+        $appState = ApplicationState::where('app_id', '=', $appId)->latest()->first(); 
+        $firstState = ApplicationState::where('app_id', '=', $appId)->orderBy('id', 'asc')->first();
+        $subDate = new DateTime($firstState->created_at);
+        $sign = ApplicantSignInfo::where('app_id', '=', $appId)->first();
+        $addr = $appForm->reg_addr;
+
+        $info['refNo'] = $appForm->ref_no;
+        $info['printDate'] = $isDraft? "[approval date]": date('d M Y');//00 Jun 2020
+        $info['applicantName'] = $sign->name;
+        $info['designation'] = $sign->position;
+        $info['coName'] = $appForm->co_name;
+        $info['ssm'] = $appForm->ssm_no;
+        $info['regAddr1'] = explode(',', $addr, 3)[0];
+        $info['regAddr2'] = explode(',', $addr, 3)[1];
+        $info['regAddr3'] = explode(',', $addr, 3)[2];
+        $info['subDate'] = $subDate->format('d M Y');
+        $info['expDate'] =$subDate->modify('+18 month')->format('d M Y');//submission date + 18 months
+        $info['approvedPax'] = $appState->approved_pax;
+        $info['approvedAmmt'] = $appState->approved_fund;
+        $pdf = PDF::loadView('rejectLetterTemplate', [
+            'info' => $info,
+            ]);
+        
+        return $pdf->download('testing.pdf'); 
+        //$content = $pdf->output();
+        //header("Content-Type: application/pdf");
+        //Display it
+        //echo $content;
+        //file_put_contents(storage_path('test.pdf'), $content);
+        //*/
+        /*
+        $html='';
+        $view = view('loaTemplate');
+        $html .= $view->render();
+        $view = view('loaTemplate');
+        $html .= $view->render();
+        $pdf = PDF::loadHTML($html);            
+        $sheet = $pdf->setPaper('a4', 'portrait');
+        return $sheet->download('test2.pdf');*/
+        //return view('loaTemplate');
     }
 
     protected function loadCountries()
@@ -278,9 +391,9 @@ class ApplicationController extends Controller
     protected function genRefNo($appId)
     {
         //str_pad($input, 10, "-=", STR_PAD_LEFT)
-        if(strlen($appId)<4)
+        if(strlen($appId)<3)
             $appId = str_pad($appId, 4-(strlen($appId) ), "0", STR_PAD_LEFT);
-        return env('REF_PREFIX').date('Y').$appId;
+        return env('REF_PREFIX').$appId;
     }
 
     public function viewAppStatus()
@@ -292,17 +405,124 @@ class ApplicationController extends Controller
 
         $applicant = Applicant::where([['id','=', session('userId')]])->first();
         $appStatus = ApplicationStatus::where([['app_id','=',$applicant->app_id]])
-            ->orderBy('id', 'desc')->first(); 
+            ->orderBy('id', 'desc')->first();
+        $firstAppStatus = ApplicationStatus::where([['app_id','=',$applicant->app_id]])
+            ->first(); 
         $appForm = ApplicationForm::where([['id','=',$applicant->app_id]])->first();
-        Log::info($appStatus);
+        //Log::info($appStatus);
+        $letter = ApplicationFile::where('app_id', '=', $applicant->app_id)
+            ->where(function($query){
+                $query->where('content_type','=', config('enums.applicationFileContentType')['LOA'])
+                ->orWhere('content_type','=', config('enums.applicationFileContentType')['REJ_LTR']);
+            })->latest()->first();
         $statusData = [];
         $statusData['refNo'] = $appForm->ref_no;
         $statusData['status'] = array_flip(config('enums.applicationStatus'))[$appStatus->status_id];
         $statusData['remark'] = $appStatus->comment;
+        $statusData['submissionDate'] = $firstAppStatus->at_time;
+        $statusData['showLetter'] = in_array($appStatus->status_id, [config('enums.applicationStatus')['ACCEPT_LOA'],config('enums.applicationStatus')['REJECTED']])? '1' : '0';
+        $statusData['letter_file'] = isset($letter->original_name)? $letter->original_name : '';
+        $statusData['letter_path'] = url('letter/'.$applicant->app_id);
+        $statusData['expiredMsg'] = null;
+
+        //check LOA acceptance valid date (7 days)
+        if($appStatus->status_id == config('enums.applicationStatus')['APPROVED'])
+        {
+             $apprDate = new DateTime($appStatus->at_time);
+             $expiryDate = $apprDate->modify( '+7 day' );
+             $nowDate = new DateTime('NOW');
+             if($expiryDate < $nowDate)
+             {//expired
+                $statusData['showAcceptance'] = "0";
+                $statusData['expiredMsg'] = "Your Letter Of Offer has expired. Expiry Date: ". 
+                $expiryDate->format("d-m-Y");
+
+                $applicant = Applicant::where([['id','=', session('userId')]])->first();
+                $appStatusExpired = new ApplicationStatus;
+                $appStatusExpired->app_id = $applicant->app_id;
+                $appStatusExpired->status_id = config('enums.applicationStatus')['LOA_EXPIRED'];
+                $appStatusExpired->comment = "LOA Offer Expired.";
+                $appStatusExpired->save();
+
+                $appHistoryExpired = new ApplicationHistory;
+                $appHistoryExpired->app_id = $applicant->app_id;
+                $appHistoryExpired->approved_pax = 0;
+                $appHistoryExpired->approved_fund = 0;
+                $appHistoryExpired->by_name = "Applicant";
+                $appHistoryExpired->action = "No Action";
+                $appHistoryExpired->state_id = config('enums.applicationStatus')['LOA_EXPIRED'];
+                $appHistoryExpired->save();
+
+             }
+             else
+             {//valid
+                $statusData['showAcceptance'] = "1";                
+                $statusData['approvalDate'] = $apprDate->format("d-m-Y");
+                $expiryDate = New DateTime($appStatus['approvalDate']);
+                $statusData['expiryDate'] = $expiryDate->format("d-m-Y");
+             }
+        }
+        else
+        {
+            $statusData['showAcceptance'] = "0";
+        }
+
+        //check Appeal valid date (3 days)
+        if($appStatus->status_id == config('enums.applicationStatus')['REJECTED'])
+        {
+            $rejDate = new DateTime($appStatus->at_time);
+            $expiryDate = $rejDate->modify( '+3 day' );
+            $nowDate = new DateTime('NOW');
+            if($expiryDate < $nowDate)
+            {//expired
+               $statusData['showAppeal'] = "0";
+               $statusData['expiredMsg'] = "Your Appeal Offer has expired. Expiry Date: ". 
+               $expiryDate->format("d-m-Y");
+
+               $applicant = Applicant::where([['id','=', session('userId')]])->first();
+               $appStatusExpired = new ApplicationStatus;
+               $appStatusExpired->app_id = $applicant->app_id;
+               $appStatusExpired->status_id = config('enums.applicationStatus')['APPEAL_EXPIRED'];
+               $appStatusExpired->comment = "Appeal Offer Expired.";
+               $appStatusExpired->save();
+
+               $appHistoryExpired = new ApplicationHistory;
+               $appHistoryExpired->app_id = $applicant->app_id;
+               $appHistoryExpired->approved_pax = 0;
+               $appHistoryExpired->approved_fund = 0;
+               $appHistoryExpired->by_name = "Applicant";
+               $appHistoryExpired->action = "No Action";
+               $appHistoryExpired->state_id = config('enums.applicationStatus')['APPEAL_EXPIRED'];
+               $appHistoryExpired->save();
+
+            }
+            else
+            {//valid
+               $statusData['showAppeal'] = "1";                
+            }
+        }
+        else
+        {
+            $statusData['showAppeal'] = '0';
+        }
         return view('appFormApplicationStatus')->with([
             'activeLink' => config('enums.applicantSidebarLinks')['APP_STATUS'],
             'appStatus' => $statusData
             ]);
+    }
+
+    public function viewAppeal()
+    {
+        if (!session('userName')) 
+        {
+            return redirect('/timeout');
+        }
+        $files = [];
+
+        return view('appeal')->with([
+            'activeLink' => config('enums.applicantSidebarLinks')['APP_STATUS'],
+            'fileList' => $files,
+        ]);
     }
 
     public function sct1Save(Request $request)
@@ -313,18 +533,28 @@ class ApplicationController extends Controller
         }
 
         $act = $request->act;
+        
         if($act == 'edit')
         {
             $appForm = ApplicationForm::find($request->appId);
         }
         else
         {
-            $appForm = new ApplicationForm;
+            //check appform exist or not for backbutton issue
+            $applicant = Applicant::find(session('userId'));
+            if(isset($applicant->app_id))
+            {
+                $appForm = ApplicationForm::find(session('userId'));
+            }
+            else
+            {
+                $appForm = new ApplicationForm;
+            }
         }
         
-        $appForm->id = $request->appId;
+        //$appForm->id = $request->appId;
         $appForm->co_name = $request->inputCompName;
-        $appForm->incorporation_date = $request->inputIncorpDate;
+        $appForm->incorporation_date = date( "Y-m-d",strtotime($request->inputIncorpDate));
         $appForm->ssm_no = $request->inputSSMno;
         $appForm->paid_capital = $request->inputCapital;
         $appForm->reg_addr = $request->inputRegAddress;
@@ -350,7 +580,7 @@ class ApplicationController extends Controller
         $errMsg=[];
         foreach($appForm->toArray() as $key => $value)
         {
-            if(in_array($key, ['id']))
+            if(in_array($key, ['id','loa_file','ref_no']))
                 continue;
             if(empty($value) || !isset($value))
             {
@@ -367,7 +597,7 @@ class ApplicationController extends Controller
         {
             $errMsg["website"] ="Invalid URL";
         }
-        if($act != 'edit' && !array_key_exists("website", $errMsg) && ApplicationForm::where([['ssm_no', '=', $appForm->ssm_no]])->exists())
+        if($act != 'edit' && !array_key_exists("ssm_no", $errMsg) && ApplicationForm::where([['ssm_no', '=', $appForm->ssm_no]])->exists())
         {
             $errMsg["ssm_no"] ="This SSM Registration Number already existed in the system!";
         }
@@ -542,16 +772,22 @@ class ApplicationController extends Controller
             {
                 $appStatus = new ApplicationStatus;
                 $appStatus->app_id = $applicant->app_id;
-                $appStatus->status_id = config('enums.applicationStatus')['PREQ_FAILED'];
+                $appStatus->status_id = config('enums.applicationStatus')['PREQUALIFICATION_FAILED'];
                 $appStatus->comment = "Failed prequalification check.";
                 $appStatus->save();
 
-                $appForm = ApplicationForm::where([['id', '=', $applicant->app_id]]);
+                $appState = new ApplicationState;
+                $appState->app_id = $applicant->app_id;
+                $appState->state_id = config('enums.applicationStatus')['PREQUALIFICATION_FAILED'];
+                $appState->by_name = "System";
+                $appState->comment = "Failed prequalification check.";
+                $appState->save();
+
+                $appForm = ApplicationForm::where([['id', '=', $applicant->app_id]])->first();
                 $appForm->ref_no = $this->genRefNo($applicant->app_id);
                 $appForm->save();
-
-                //TODO redirect to application status page
-                //return redirect('/formSct/3');
+                session(['hasForm' => '0']);
+                return redirect('/appStatus');
             }
 
             
@@ -576,9 +812,13 @@ class ApplicationController extends Controller
         $req['inputLocalYear1'] = $request->inputLocalYear1;
         $req['inputLocalYear2'] = $request->inputLocalYear2;
         $req['inputLocalYear3'] = $request->inputLocalYear3;
+        $req['inputLocalYear4'] = $request->inputLocalYear4;
+        $req['inputLocalYear5'] = $request->inputLocalYear5;
         $req['inputForeignerYear1'] = $request->inputForeignerYear1;
         $req['inputForeignerYear2'] = $request->inputForeignerYear2;
         $req['inputForeignerYear3'] = $request->inputForeignerYear3;
+        $req['inputForeignerYear4'] = $request->inputForeignerYear4;
+        $req['inputForeignerYear5'] = $request->inputForeignerYear5;
         $req['inputMalayEmp'] = $request->inputMalayEmp;
         $req['inputForeignEmp'] = $request->inputForeignEmp;
         $req['inputManagement'] = $request->inputManagement;
@@ -631,6 +871,10 @@ class ApplicationController extends Controller
 
                 Employee::where([['app_id', '=', $appForm->id],['year','=', 3],['emp_type', '=',config('enums.employeeType')['LOCAL']]])
                 ->update(['pax_count'=> $req['inputLocalYear3']]);
+                Employee::where([['app_id', '=', $appForm->id],['year','=', 4],['emp_type', '=',config('enums.employeeType')['LOCAL']]])
+                ->update(['pax_count'=> $req['inputLocalYear4']]);
+                Employee::where([['app_id', '=', $appForm->id],['year','=', 5],['emp_type', '=',config('enums.employeeType')['LOCAL']]])
+                ->update(['pax_count'=> $req['inputLocalYear5']]);
 
                 Employee::where([['app_id', '=', $appForm->id],['year','=', 1],['emp_type', '=',config('enums.employeeType')['FOREIGNER']]])
                 ->update(['pax_count'=> $req['inputForeignerYear1']]);
@@ -640,6 +884,10 @@ class ApplicationController extends Controller
 
                 Employee::where([['app_id', '=', $appForm->id],['year','=', 3],['emp_type', '=',config('enums.employeeType')['FOREIGNER']]])
                 ->update(['pax_count'=> $req['inputForeignerYear3']]);
+                Employee::where([['app_id', '=', $appForm->id],['year','=', 4],['emp_type', '=',config('enums.employeeType')['FOREIGNER']]])
+                ->update(['pax_count'=> $req['inputForeignerYear4']]);
+                Employee::where([['app_id', '=', $appForm->id],['year','=', 5],['emp_type', '=',config('enums.employeeType')['FOREIGNER']]])
+                ->update(['pax_count'=> $req['inputForeignerYear5']]);
 
                 Employee::where([['app_id', '=', $appForm->id],['year','=', 0],['emp_type', '=',config('enums.employeeType')['LOCAL']]])
                 ->update(['pax_count'=> $req['inputMalayEmp']]);
@@ -685,6 +933,20 @@ class ApplicationController extends Controller
 
                 $employee = new Employee;
                 $employee->app_id = $appForm->id;
+                $employee->emp_type = config('enums.employeeType')['LOCAL'];
+                $employee->year = 4;
+                $employee->pax_count = $req['inputLocalYear4'];
+                $employee->save();
+
+                $employee = new Employee;
+                $employee->app_id = $appForm->id;
+                $employee->emp_type = config('enums.employeeType')['LOCAL'];
+                $employee->year = 5;
+                $employee->pax_count = $req['inputLocalYear5'];
+                $employee->save();
+
+                $employee = new Employee;
+                $employee->app_id = $appForm->id;
                 $employee->emp_type = config('enums.employeeType')['FOREIGNER'];
                 $employee->year = 1;
                 $employee->pax_count = $req['inputForeignerYear1'];
@@ -702,6 +964,20 @@ class ApplicationController extends Controller
                 $employee->emp_type = config('enums.employeeType')['FOREIGNER'];
                 $employee->year = 3;
                 $employee->pax_count = $req['inputForeignerYear3'];
+                $employee->save();
+
+                $employee = new Employee;
+                $employee->app_id = $appForm->id;
+                $employee->emp_type = config('enums.employeeType')['FOREIGNER'];
+                $employee->year = 4;
+                $employee->pax_count = $req['inputForeignerYear4'];
+                $employee->save();
+
+                $employee = new Employee;
+                $employee->app_id = $appForm->id;
+                $employee->emp_type = config('enums.employeeType')['FOREIGNER'];
+                $employee->year = 5;
+                $employee->pax_count = $req['inputForeignerYear5'];
                 $employee->save();
 
                 //current employee
@@ -768,7 +1044,7 @@ class ApplicationController extends Controller
         {
             return redirect('/timeout');
         }
-
+        //Log::info($request);
         $errMsg=[];
         $req=[];
         $act = $request->act;
@@ -777,15 +1053,26 @@ class ApplicationController extends Controller
         $req['inputRevYear1'] = $request->inputRevYear1;
         $req['inputRevYear2'] = $request->inputRevYear2;
         $req['inputRevYear3'] = $request->inputRevYear3;
+        $req['inputRevYear4'] = $request->inputRevYear4;
+        $req['inputRevYear5'] = $request->inputRevYear5;
+
         $req['inputNetYear1'] = $request->inputNetYear1;
         $req['inputNetYear2'] = $request->inputNetYear2;
         $req['inputNetYear3'] = $request->inputNetYear3;
+        $req['inputNetYear4'] = $request->inputNetYear4;
+        $req['inputNetYear5'] = $request->inputNetYear5;
+
         $req['inputCapYear1'] = $request->inputCapYear1;
         $req['inputCapYear2'] = $request->inputCapYear2;
         $req['inputCapYear3'] = $request->inputCapYear3;
+        $req['inputCapYear4'] = $request->inputCapYear4;
+        $req['inputCapYear5'] = $request->inputCapYear5;
+        
         $req['inputOpYear1'] = $request->inputOpYear1;
         $req['inputOpYear2'] = $request->inputOpYear2;
         $req['inputOpYear3'] = $request->inputOpYear3;
+        $req['inputOpYear4'] = $request->inputOpYear4;
+        $req['inputOpYear5'] = $request->inputOpYear5;
 
         //validation
         foreach($req as $key => $value)
@@ -795,9 +1082,11 @@ class ApplicationController extends Controller
                 $errMsg[$key] = "Please fill in mandatory fields!";
             }
         }
-
+        
         if(!empty($errMsg)){
+            Log::info($errMsg);
             $loadData =[];
+            $req['id'] = $appForm->id;
             $loadData['sect_progress'] = session('userSectProgress');
             return view('appFormSect4')->with([
                 'activeLink' => config('enums.applicantSidebarLinks')['FORM'],
@@ -812,7 +1101,9 @@ class ApplicationController extends Controller
         {
             if($act == 'edit')
             {
-                Financial::where([['app_id', '=', $appForm->id],['year','=', -3]])
+                $test =Financial::where([['app_id', '=', $appForm->id],['year','=', -5]])->first()->toArray();
+                Log::info($test);
+                Financial::where([['app_id', '=', $appForm->id],['year','=', -5]])
                 ->update([
                     'sales'=> $req['inputRevYear1'],
                     'loss'=> $req['inputNetYear1'],
@@ -820,7 +1111,7 @@ class ApplicationController extends Controller
                     'expenditure'=> $req['inputOpYear1'],
                 ]);
 
-                Financial::where([['app_id', '=', $appForm->id],['year','=', -2]])
+                Financial::where([['app_id', '=', $appForm->id],['year','=', -4]])
                 ->update([
                     'sales'=> $req['inputRevYear2'],
                     'loss'=> $req['inputNetYear2'],
@@ -828,7 +1119,7 @@ class ApplicationController extends Controller
                     'expenditure'=> $req['inputOpYear2'],
                 ]);
 
-                Financial::where([['app_id', '=', $appForm->id],['year','=', -1]])
+                Financial::where([['app_id', '=', $appForm->id],['year','=', -3]])
                 ->update([
                     'sales'=> $req['inputRevYear3'],
                     'loss'=> $req['inputNetYear3'],
@@ -836,12 +1127,28 @@ class ApplicationController extends Controller
                     'expenditure'=> $req['inputOpYear3'],
                 ]);
 
+                Financial::where([['app_id', '=', $appForm->id],['year','=', -2]])
+                ->update([
+                    'sales'=> $req['inputRevYear4'],
+                    'loss'=> $req['inputNetYear4'],
+                    'capital'=> $req['inputCapYear4'],
+                    'expenditure'=> $req['inputOpYear4'],
+                ]);
+
+                Financial::where([['app_id', '=', $appForm->id],['year','=', -1]])
+                ->update([
+                    'sales'=> $req['inputRevYear5'],
+                    'loss'=> $req['inputNetYear5'],
+                    'capital'=> $req['inputCapYear5'],
+                    'expenditure'=> $req['inputOpYear5'],
+                ]);
+
             }
             else
             {
                 $fin = new Financial;
                 $fin->app_id = $appForm->id;
-                $fin->year = -3;
+                $fin->year = -5;
                 $fin->sales = $req['inputRevYear1'];
                 $fin->loss = $req['inputNetYear1'];
                 $fin->capital = $req['inputCapYear1'];
@@ -850,7 +1157,7 @@ class ApplicationController extends Controller
 
                 $fin = new Financial;
                 $fin->app_id = $appForm->id;
-                $fin->year = -2;
+                $fin->year = -4;
                 $fin->sales = $req['inputRevYear2'];
                 $fin->loss = $req['inputNetYear2'];
                 $fin->capital = $req['inputCapYear2'];
@@ -859,11 +1166,29 @@ class ApplicationController extends Controller
 
                 $fin = new Financial;
                 $fin->app_id = $appForm->id;
-                $fin->year = -1;
+                $fin->year = -3;
                 $fin->sales = $req['inputRevYear3'];
                 $fin->loss = $req['inputNetYear3'];
                 $fin->capital = $req['inputCapYear3'];
                 $fin->expenditure = $req['inputOpYear3'];
+                $fin->save();
+
+                $fin = new Financial;
+                $fin->app_id = $appForm->id;
+                $fin->year = -2;
+                $fin->sales = $req['inputRevYear4'];
+                $fin->loss = $req['inputNetYear4'];
+                $fin->capital = $req['inputCapYear4'];
+                $fin->expenditure = $req['inputOpYear4'];
+                $fin->save();
+
+                $fin = new Financial;
+                $fin->app_id = $appForm->id;
+                $fin->year = -1;
+                $fin->sales = $req['inputRevYear5'];
+                $fin->loss = $req['inputNetYear5'];
+                $fin->capital = $req['inputCapYear5'];
+                $fin->expenditure = $req['inputOpYear5'];
                 $fin->save();
 
             }
@@ -1042,11 +1367,15 @@ class ApplicationController extends Controller
         {
             return redirect('/timeout');
         }
+        //Log::info($request);
+        //return;
 
         $errMsg=[];
         $reqFiles=[];
         $act = $request->act;
+        $toProceed = $request->btnProceed;
         $imgExtension = ['jpg','jpeg','png', 'gif','pdf'];
+
         for($i=1; $i <= count(config('enums.fileContentType')); $i++)
         {
             if($request->hasfile('customFile-'.$i))
@@ -1061,11 +1390,29 @@ class ApplicationController extends Controller
                 }
                 
             }
-            elseif($act != 'edit')
+
+        }
+        if(isset($toProceed))
+        {
+            $doc = SupportDoc::select('content_id')->where([['app_id', '=', $request->appId]])->get()->toArray();
+            $contentIds = [];
+            foreach($doc as $d)
             {
-                $errMsg['err-'.$i] = "No file selected!";
+                array_push($contentIds, $d['content_id']);
+            }
+            //Log::info($contentIds);
+            if(count($contentIds) < count(config('enums.fileContentType')))
+            {
+                for($i=1; $i <= count(config('enums.fileContentType')); $i++)
+                {
+                    if(! in_array($i, $contentIds))
+                    {
+                        $errMsg['err-'.$i] = "Please upload file for this section!";
+                    }
+                }
             }
         }
+
         //Log::info($reqFiles);
         if(!empty($errMsg))
         {
@@ -1074,18 +1421,17 @@ class ApplicationController extends Controller
             $reqFiles['id'] = $request->appId;
             //Log::info($req);
             $loadData['sect_progress'] = session('userSectProgress');
-            if($act=='edit')
-            {
-                $docs = [];
-                $temp = SupportDoc::where([['app_id', '=', $request->appId]])->get();
-                Log::info($temp);
-                foreach($temp as $row)
-                {
-                    $docs[$row->content_id] =  $row->original_filename;
-                }
 
-                $loadData['docs'] = $docs; 
+            $docs = [];
+            $temp = SupportDoc::where([['app_id', '=', $request->appId]])->get();
+            //Log::info($temp);
+            foreach($temp as $row)
+            {
+                $docs[$row->content_id] =  $row->original_filename;
             }
+
+            $loadData['docs'] = $docs; 
+
             //Log::info($loadData);
             return view('appFormSect6')->with([
                 'activeLink' => config('enums.applicantSidebarLinks')['FORM'],
@@ -1097,24 +1443,24 @@ class ApplicationController extends Controller
         }
         else
         {
-            if($act != 'edit')
+            if(!isset($toProceed))
             {
-                for($i=1; $i <= count(config('enums.fileContentType')); $i++)
+                $applicant = Applicant::find(session('userId'));
+                foreach($reqFiles as $key => $file)
                 {
-                    $file = $reqFiles[$i];
-                    $name = $file->getClientOriginalName();
                     $genName = date('YmdHisv')."_".$request->appId."_".$i.".".$file->getClientOriginalExtension();
-                    $file->move(storage_path().'/supportDoc/'.$request->appId.'/',$genName); 
-                    
-                    $supportDoc = new SupportDoc;
-                    $supportDoc->app_id = $request->appId;
-                    $supportDoc->content_id = $i;
-                    $supportDoc->original_filename = $name;
-                    $supportDoc->new_filename = $genName;
-                    $supportDoc->save();
-
+                    $file->move(storage_path().'/files/'.$request->appId.'/supportDoc/',$genName);
+                    //Log::info('key: '.$key.', ori_name: '.$file->getClientOriginalName().', new_name: '.$genName);
+                    SupportDoc::updateOrCreate(
+                        ['app_id' => $applicant->app_id, 'content_id' => $key],
+                        ['original_filename' => $file->getClientOriginalName(), 'new_filename' =>$genName ]
+                    );
+                              
                 }
-
+                return redirect('/formSct/6');
+            }
+            else
+            {
                 $applicant = Applicant::find(session('userId'));
                 if($applicant->sect_progress <= 6)
                 {
@@ -1122,22 +1468,6 @@ class ApplicationController extends Controller
                     session(['userSectProgress' => 7]);
                 }
                 $applicant->save();
-                return redirect('/formSct/7');
-            }
-            else
-            {
-                $applicant = Applicant::find(session('userId'));
-                foreach($reqFiles as $key => $file)
-                {
-                    $supportDoc = SupportDoc::where([
-                        ['app_id', '=', $applicant->app_id],
-                        ['content_id', '=', $key],
-                    ])->first();
-                    $supportDoc->original_filename = $file->getClientOriginalName();
-                    $supportDoc->save();
-
-                    $file->move(storage_path().'/supportDoc/'.$request->appId.'/',$supportDoc->new_filename);                     
-                }
                 return redirect('/formSct/7');
             }
         }
@@ -1195,7 +1525,7 @@ class ApplicationController extends Controller
         }
         if(!empty($errMsg))
         {
-            Log::Info($errMsg);
+            //Log::Info($errMsg);
             $signData = [];
             $loadData =[];
             $signData['id'] = $request->appId;
@@ -1206,6 +1536,7 @@ class ApplicationController extends Controller
             $signData['inputSignEmail'] = $request->inputSignEmail;
             $signData['inputSignIc'] = $request->inputSignIc;
             $loadData['sect_progress'] = session('userSectProgress');
+            $loadData['previewData'] = $this->getFullPreviewByAppId($request->appId);
             return view('appFormSect7')->with([
                 'activeLink' => config('enums.applicantSidebarLinks')['FORM'],
                 'activeSct' => 7,
@@ -1217,18 +1548,183 @@ class ApplicationController extends Controller
         else
         {
             $signInfo->save();
+
             $appStatus = new ApplicationStatus;
             $appStatus->app_id = $request->appId;
             $appStatus->status_id = config('enums.applicationStatus')['SUBMITTED'];
             $appStatus->comment = "Application Submitted.";
             $appStatus->save();
 
+
+            $appState = new ApplicationState;
+            $appState->app_id = $request->appId;
+            $appState->state_id = config('enums.applicationStartState')['EVALUTION'];
+            $result = $this->calculatePaxNFund($request->appId);
+            $appState->approved_pax = $result['pax'];
+            $appState->approved_fund = $result['amt'];
+            $appState->save();
+
+            $appHistory = new ApplicationHistory;
+            $appHistory->app_id = $request->appId;
+            $appHistory->by_name = "Applicant";
+            $appHistory->action = "Submit";
+            $appHistory->approved_pax = $result['pax'];
+            $appHistory->approved_fund = $result['amt'];
+            $appHistory->save();
+
             $appForm = ApplicationForm::where([['id', '=', $request->appId]])->first();
             $appForm->ref_no = $this->genRefNo($request->appId);
             $appForm->save();
-
+            session(['hasForm' => '0']);
             return redirect('/appStatus');
         }
         
+    }
+
+    public function postAppStatus(Request $request)
+    {
+        if (!session('userName')) 
+        {
+            return redirect('/timeout');
+        }
+        if(isset($request->chkTnc))
+        {
+            $applicant = Applicant::where([['id','=', session('userId')]])->first();
+            $appStatus = new ApplicationStatus;
+            $appStatus->app_id = $applicant->app_id;
+            $appStatus->status_id = config('enums.applicationStatus')['ACCEPT_LOA'];
+            $appStatus->comment = "Letter of Offer accepted.";
+            $appStatus->save();
+
+            $appHistLoa = ApplicationHistory::where('app_id','=',$applicant->app_id)
+                ->where('state_id', config('enums.applicationStatus')['APPROVED'])
+                ->first();
+            $appHistory = new ApplicationHistory;
+            $appHistory->app_id = $applicant->app_id;
+            $appHistory->approved_pax = $appHistLoa->approved_pax;
+            $appHistory->approved_fund = $appHistLoa->approved_fund;
+            $appHistory->by_name = "Applicant";
+            $appHistory->action = "Accept";
+            $appHistory->state_id = config('enums.applicationStatus')['ACCEPT_LOA'];
+            $appHistory->save();
+
+        }
+        return redirect('/appStatus');
+    }
+
+    public function postAppeal(Request $request)
+    {
+        if (!session('userName')) 
+        {
+            return redirect('/timeout');
+        }
+
+        $errMsg=[];
+        $reqFiles=[];
+        $act = $request->act;
+        $applicant = Applicant::find(session('userId'));
+        $imgExtension = ['jpg','jpeg','png', 'gif','pdf'];
+
+        if($request->hasfile('supportFile'))
+        {
+            if(in_array(strtolower($request->file('supportFile')->getClientOriginalExtension()), $imgExtension))
+            {
+                $file = $request->file('supportFile');
+                $genName = date('YmdHisv').$file->getClientOriginalExtension();
+                $file->move(storage_path().'/files/'.$applicant->app_id.'/appeal/',$genName);
+                
+                $appFile = new ApplicationFile;
+                $appFile->app_id = $applicant->app_id;
+                $appFile->content_type = config('enums.applicationFileContentType')['APPEAL_FILE'];
+                $appFile->new_name = $genName;
+                $appFile->original_name = $file->getClientOriginalName();
+                $appFile->save();
+            }
+            else
+            {
+                $errMsg['errFile'] = "File extension allowed:".join("," ,$imgExtension);
+            }
+            
+        }
+
+        if(isset($request->btnRemove))
+        {
+            $delFile = ApplicationFile::find($request->btnRemove);
+            $delPath = storage_path().'/files/'.$applicant->app_id.'/appeal/'.$delFile->new_name;
+            unlink($delPath);
+            $delFile->delete();
+        }
+
+        if(!isset($request->btnSubmit))
+        {
+            $files = ApplicationFile::where('app_id', '=', $applicant->app_id)
+            ->where('content_type', '=', config('enums.applicationFileContentType')['APPEAL_FILE'])
+            ->get()->toArray();
+            $filePath = url("");
+            return view('appeal')->with([
+                'activeLink' => config('enums.applicantSidebarLinks')['APP_STATUS'],
+                'errMsg' => $errMsg,
+                'fileList' => $files,
+                'appId' => $applicant->app_id,
+            ]);
+        }
+        else
+        {
+            $appStatus = new ApplicationStatus;
+            $appStatus->app_id = $applicant->app_id;
+            $appStatus->status_id = config('enums.applicationStatus')['APPEAL'];
+            $appStatus->comment = "Application Submit for Appeal.";
+            $appStatus->save();
+
+
+            $appState = ApplicationState::where('app_id', '=', $applicant->app_id)->first();
+            $appState->state_id = config('enums.applicationStartState')['APPEAL_EVALUATION'];
+            $appState->save();
+
+            $appHistory = new ApplicationHistory;
+            $appHistory->app_id = $applicant->app_id;
+            $appHistory->state_id = config('enums.flowStateId')['Start_APPEAL'];
+            $appHistory->by_name = "Applicant";
+            $appHistory->action = "Appeal";
+            $appHistory->comment = $request->textarea;
+            $appHistory->approved_pax = $appState->approved_pax;
+            $appHistory->approved_fund = $appState->approved_fund;
+            $appHistory->save();
+
+            return redirect('/appStatus');
+        }
+    }
+
+    private function calculatePaxNFund($appId)
+    {
+        $appForm = ApplicationForm::find($appId);
+        $arrManufacturing = ['Green Technology','Medical Devices','Automotive','Additive Manufacturing','Aerospace'];
+        $useFormula = "1";
+        if ($appForm->industry_type=="SME" || in_array($appForm->sector, $arrManufacturing) )
+        {
+            $useFormula = "0";
+        }
+        $paxs = RecruitPax::where([['app_id','=',$appId]])->get();
+        $totalAmt=0;
+        $totalPax=0;
+        $amt=0;
+        foreach($paxs as $pax)
+        {
+            if($useFormula=='0' && $pax->qualification == config('enums.qualification')['DEG'])
+            {
+                $amt=1000;
+            }
+            else
+            {
+                $amt = (($pax->min_salary/2) > 1000) ? 1000 : ($pax->min_salary/2);
+            }
+            $totalAmt += ($amt * $pax->pax_count);
+            $totalPax += $pax->pax_count;
+        }
+
+        return [
+            'amt' => $totalAmt,
+            'pax' => $totalPax
+        ];
     }
 }

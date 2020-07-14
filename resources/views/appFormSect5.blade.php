@@ -1,7 +1,7 @@
 @extends('appForm')
 
 @section('tabTitle')
-Recruitment Plan
+Section 5: Recruitment Plan
 @endsection
 
 @section('sectBody')
@@ -11,7 +11,7 @@ Recruitment Plan
     <input type="hidden" id="act" name="act" value="{{ $loadData['act'] ?? '' }}">
     <input type="hidden" id="useFormula" name="useFormula" value="{{ $appForm['useFormula'] ?? '' }}">
     <div class="card-body">
-        <p>View sample form here <a href=""><i class="fa fa-eye"></i></a></p>
+        <!--<p>View sample form here <a href=""><i class="fa fa-eye"></i></a></p>-->
 
         <!-- Part A --> 
         <div class="form-group row">
@@ -20,7 +20,7 @@ Recruitment Plan
 
         <!-- First Button --> 
         <span class="table-add float-right mb-3 mr-2">
-          <button type="button" class="btn btn-block btn-default">Add Row</button>
+          <button type="button" class="btn btn-block btn-success save-btn">Add Row</button>
         </span>
 
         <!-- First Table --> 
@@ -42,9 +42,9 @@ Recruitment Plan
             @if (count($appForm['tbl1']) > 1)
             @foreach ($appForm['tbl1'] as $tmp)
             <tr class="item" onchange="calculateAmount1(this.value)" required >
-              <td class="addrow" scope="row"><input type="text" class="textboxalign" id="No1" name="No1" value="1" readonly="readonly"></td>
-              <td><input type="text" class="textboxalign" id="inputPosition" name="inputPosition[]" value="{{ $tmp['inputPosition'] ?? '' }}"></td>
-              <td>
+              <td class="addrow align-middle" scope="row"><input type="text" class="textboxalign" id="No1" name="No1" value="1" readonly="readonly"></td>
+              <td class="align-middle"><input type="text" class="textboxalign border border-dark" id="inputPosition" name="inputPosition[]" value="{{ $tmp['inputPosition'] ?? '' }}"></td>
+              <td class="align-middle">
                 <select class="form-control" id="degree" name="degree[]">
                 <option @if (1 == ($tmp['degree'] ?? '')) selected @endif value="1">Degree/Master/PhD</option>
                 <option @if (2 == ($tmp['degree'] ?? '')) selected @endif value="2">Advance Dip/Diploma</option>
@@ -52,11 +52,13 @@ Recruitment Plan
                 <option @if (4 == ($tmp['degree'] ?? '')) selected @endif value="4">School Leavers</option>
               </select>
               </td>
-              <td><input type="number" min=0 oninput="validity.valid||(value='');" step="0.01" 
-                class="textboxalign" id="inputSalary" name="inputSalary[]" value="{{ $tmp['inputSalary'] ?? '' }}"></td>
-              <td><input type="number" min=0 oninput="validity.valid||(value='');" 
-                class="textboxalign" id="inputPax" name="inputPax[]" value="{{ $tmp['inputPax'] ?? '' }}"></td>
-              <td><input type="number" class="textboxalign boldformula" id="funding" name="funding" readonly="readonly"></td>
+              <td class="align-middle"><input type="number" min=0 oninput="validity.valid||(value='');" step="0.01" 
+                class="textboxalign text-right border border-dark" id="inputSalary" name="inputSalary[]" value="{{ $tmp['inputSalary'] ?? '' }}"></td>
+              <td class="align-middle"><input type="number" min=0 oninput="validity.valid||(value='');" 
+                class="textboxalign border border-dark" id="inputPax" name="inputPax[]" value="{{ $tmp['inputPax'] ?? '' }}"></td>
+              <td class="text-center">
+                <label id="lbFormula" name="lbFormula[]"></label>
+                <input type="number" class="textboxalign boldformula text-right" id="funding" name="funding" readonly="readonly"></td>
               <td>
                 <span class="delete">
                   <button type="button" class="btn btn-block btn-danger">Remove</button>
@@ -66,9 +68,9 @@ Recruitment Plan
             @endforeach
             @else
             <tr class="item" onchange="calculateAmount1(this.value)" required >
-              <td class="addrow" scope="row"><input type="text" class="textboxalign" id="No1" name="No1" value="1" readonly="readonly"></td>
-              <td><input type="text" class="textboxalign" id="inputPosition" name="inputPosition[]" value="{{ $appForm['tbl1'][0]['inputPosition'] ?? '' }}"></td>
-              <td>
+              <td class="addrow align-middle" scope="row"><input type="text" class="textboxalign" id="No1" name="No1" value="1" readonly="readonly"></td>
+              <td class="align-middle"><input type="text" class="textboxalign border border-dark" id="inputPosition" name="inputPosition[]" value="{{ $appForm['tbl1'][0]['inputPosition'] ?? '' }}"></td>
+              <td class="align-middle">
                 <select class="form-control" id="degree" name="degree[]">
                 <option @if (1 == ($appForm['tbl1'][0]['degree'] ?? '')) selected @endif value="1">Degree/Master/PhD</option>
                 <option @if (2 == ($appForm['tbl1'][0]['degree'] ?? '')) selected @endif value="2">Advance Dip/Diploma</option>
@@ -76,11 +78,13 @@ Recruitment Plan
                 <option @if (4 == ($appForm['tbl1'][0]['degree'] ?? '')) selected @endif value="4">School Leavers</option>
               </select>
               </td>
-              <td><input type="number" min=0 oninput="validity.valid||(value='');" step="0.01" 
-                class="textboxalign" id="inputSalary" name="inputSalary[]" value="{{ $appForm['tbl1'][0]['inputSalary'] ?? '' }}"></td>
-              <td><input type="number" min=0 oninput="validity.valid||(value='');" 
-                class="textboxalign" id="inputPax" name="inputPax[]" value="{{ $appForm['tbl1'][0]['inputPax'] ?? '' }}"></td>
-              <td><input type="number" class="textboxalign boldformula" id="funding" name="funding" readonly="readonly"></td>
+              <td class="align-middle"><input type="number" min=0 oninput="validity.valid||(value='');" step="0.01" 
+                class="textboxalign text-right border border-dark" id="inputSalary" name="inputSalary[]" value="{{ $appForm['tbl1'][0]['inputSalary'] ?? '' }}"></td>
+              <td class="align-middle"><input type="number" min=0 oninput="validity.valid||(value='');" 
+                class="textboxalign border border-dark" id="inputPax" name="inputPax[]" value="{{ $appForm['tbl1'][0]['inputPax'] ?? '' }}"></td>
+              <td class="text-center">
+                <label id="lbFormula" name="lbFormula[]"></label>
+                <input type="number" class="textboxalign boldformula text-right" id="funding" name="funding" readonly="readonly"></td>
               <td>
                 <span class="delete">
                   <button type="button" class="btn btn-block btn-danger">Remove</button>
@@ -93,8 +97,8 @@ Recruitment Plan
             <tr>
               <th colspan="4" style="text-align: right">TOTAL</th>
               <th><input type="number" class="textboxalign boldformula" name="totalpax" id="totalpax"  readonly="readonly"></th>
-              <th><input type="number" class="textboxalign boldformula" name="totalfunding" id="totalfunding"  readonly="readonly"></th>
-              <th style="background-color: black"></th>
+              <th><input type="number" class="textboxalign boldformula text-right" name="totalfunding" id="totalfunding"  readonly="readonly"></th>
+              
             </tr>
           </tfoot>
         </table>
@@ -117,7 +121,7 @@ Recruitment Plan
 
         <!-- Second Button --> 
         <span class="table-add2 float-right mb-3 mr-2">
-          <button type="button" class="btn btn-block btn-default">Add Row</button>
+          <button type="button" class="btn btn-block btn-success save-btn">Add Row</button>
         </span>
 
         <!-- Second Table --> 
@@ -128,7 +132,7 @@ Recruitment Plan
           <tr>
             <th class="thalign align-text-top" style="width:  5%" scope="col" colspan="2" rowspan="2">No.</th>
             <th class="thalign align-text-top" colspan="2" rowspan="2" style="width:  20%" >Position (Position must be same as per stated in the offered letter)</th>
-            <th class="thalign" colspan="3" >Hiring Plan (Please state your hiring plan for the requested NTEP Participants)</th>
+            <th class="thalign" colspan="3" >Hiring Plan (Please state your hiring plan for the requested penjanaNCER Participants as per part A)</th>
 			      <th class="thalign align-text-top" style="width:  20%" scope="col" colspan="2" rowspan="2">Total</th>										  
             <th class="thalign align-text-top" style="width:  5%" scope="col" colspan="2" rowspan="2"></th>
           </tr>
@@ -143,13 +147,16 @@ Recruitment Plan
           @foreach ($appForm['tbl2'] as $tmp)
           <tr class="item2"  onchange="calculateAmount2(this.value)" required >
             <td colspan="2"><input type="text" class="textboxalign" id="No2" name="No2" value="1" readonly="readonly"></td>
-            <td colspan="2"><input type="text" class="textboxalign" 
+            <td colspan="2"><input type="text" class="textboxalign border border-dark" 
               id="inputPosition2" name="inputPosition2[]" value="{{ $tmp['inputPosition2'] ?? '' }}"></td>
-            <td class="tdtextboxalign"><input type="number" min=0 oninput="validity.valid||(value='');" class="textboxalign" 
+            <td class="tdtextboxalign"><input type="number" min=0 oninput="validity.valid||(value='');" 
+              class="textboxalign border border-dark" 
               id="inputMonth1" name="inputMonth1[]" value="{{ $tmp['inputMonth1'] ?? '' }}"></td>
-            <td class="tdtextboxalign"><input type="number" min=0 oninput="validity.valid||(value='');" class="textboxalign" 
+            <td class="tdtextboxalign"><input type="number" min=0 oninput="validity.valid||(value='');" 
+              class="textboxalign border border-dark" 
               id="inputMonth2" name="inputMonth2[]" value="{{ $tmp['inputMonth2'] ?? '' }}"></td>
-            <td class="tdtextboxalign"><input type="number" min=0 oninput="validity.valid||(value='');" class="textboxalign" 
+            <td class="tdtextboxalign"><input type="number" min=0 oninput="validity.valid||(value='');" 
+              class="textboxalign border border-dark" 
               id="inputMonth3" name="inputMonth3[]" value="{{ $tmp['inputMonth3'] ?? '' }}"></td>
 			      <td colspan="2"><input type="number" class="textboxalign boldformula" name="totalfundingmonth" id="totalfundingmonth"  readonly="readonly"></td>
             <td colspan="2">
@@ -197,7 +204,7 @@ Recruitment Plan
         </span>
         <!-- /.card-body -->
         <div class="card-footer">
-          <button type="submit" class="btn btn-success save-btn float-right">Save</button>
+          <button type="submit" class="btn btn-success save-btn float-right">Save and Proceed</button>
         </div>
               <!-- /.card-footer -->
     </div>
@@ -219,9 +226,9 @@ Recruitment Plan
                 <option value="4">School Leavers</option>
               </select>
               </td>
-              <td><input type="number" min=0 oninput="validity.valid||(value='');" class="textboxalign" id="inputSalary" name="inputSalary[]"></td>
+              <td><input type="number" min=0 oninput="validity.valid||(value='');" class="textboxalign text-right" id="inputSalary" name="inputSalary[]"></td>
               <td><input type="number" min=0 oninput="validity.valid||(value='');" class="textboxalign" id="inputPax" name="inputPax[]"></td>
-              <td><input type="number" class="textboxalign boldformula" id="funding" name="funding" readonly="readonly"></td>
+              <td  class="text-center"><label id="lbFormula" name="lbFormula[]"></label><input type="number" class="textboxalign boldformula text-right" id="funding" name="funding" readonly="readonly"></td>
               <td>
                 <span class="delete">
                   <button type="button" class="btn btn-block btn-danger">Remove</button>
@@ -245,7 +252,7 @@ Recruitment Plan
   function setRowNoTbl2(){
     var count = 1;
     $("tr.item2").each(function() {
-      $(this).find("input#No1").val(count++);
+      $(this).find("input#No2").val(count++);
     });
   }
   
@@ -273,20 +280,16 @@ Recruitment Plan
     var total = 0, totalpax = 0 ;
     $("tr.item").each(function() {
           var salary = $(this).find("input#inputSalary").val(),
+          degree = $(this).find("select#degree").children("option:selected").val(),
           //pax = $(this).find("input#inputPax").val();
           pax = $(this).find("input#inputPax").val()!=""? parseInt($(this).find("input#inputPax").val(), 10) : 0;
-
-          if(useFormula=='1'){
-            if ( salary >= 2000){
+          debugger;
+          if(useFormula=='0' && degree=='1'){
             ntep = 1000;
-            }
-            else {
-              ntep = (salary / 2)>1000? 1000 : (salary / 2);
-            };
           }else{
-            ntep = 1000;
+            ntep = (salary / 2)>1000? 1000 : (salary / 2);
           }
-          
+          $(this).find("#lbFormula").text((ntep.toString() + " X " + pax.toString()));
           $(this).find("input#funding").val((ntep * pax).toFixed(2));
           
 
@@ -346,7 +349,7 @@ Recruitment Plan
     });
     //put in total value
     $('#totalpax2').val(totalfunding);
-
+    setRowNoTbl2();
   }
 
 </script>
